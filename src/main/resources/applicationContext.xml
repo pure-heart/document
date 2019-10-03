@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd"
+       default-autowire="byName">
+    <context:component-scan base-package="com.jhly.document"></context:component-scan>
+
+    <context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+    <bean class="org.springframework.jdbc.datasource.DriverManagerDataSource" id="dataSource">
+        <property name="driverClassName" value="${jdbc.driver}"></property>
+        <property name="url" value="${jdbc.url}"></property>
+        <property name="username" value="${jdbc.username}"></property>
+        <property name="password" value="${jdbc.password}"></property>
+    </bean>
+
+    <bean class="org.mybatis.spring.SqlSessionFactoryBean" id="sessionFactory">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!-- 扫描器 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer" id="scannerConfigurer">
+        <property name="basePackage" value="com.jhly.document.mapper"></property>
+        <property name="sqlSessionFactoryBeanName" value="sessionFactory"></property>
+    </bean>
+
+    <bean class="org.springframework.jdbc.datasource.DataSourceTransactionManager" id="transactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+
+    <!-- 声明式事务 -->
+    <tx:advice id="transactionInterceptor" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="ins*"/>
+            <tx:method name="del*"/>
+            <tx:method name="upd*"/>
+            <tx:method name="register"/>
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
+
+    <aop:config>
+        <aop:pointcut id="tx" expression="execution(* com.jhly.document.service.*.*(..))"/>
+        <aop:advisor advice-ref="transactionInterceptor" pointcut-ref="tx"></aop:advisor>
+    </aop:config>
+</beans>
